@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fitness Tracker Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f2f4f8; }
+    header { background: #1a73e8; padding: 20px; color: white; text-align: center; position: relative; }
+    .container { width: 90%; max-width: 1000px; margin: auto; padding: 20px 0; }
+    .card { background: white; padding: 20px; margin: 20px 0; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .stats { display: flex; gap: 20px; flex-wrap: wrap; }
+    .stat-box { flex: 1; min-width: 200px; background: #fff; padding: 20px; text-align: center; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .progress-step { background: #fff; padding: 15px; border-radius: 10px; margin: 10px 0; box-shadow: 0 1px 5px rgba(0,0,0,0.1); }
+    input { width: 100%; padding: 10px; margin: 8px 0; border-radius: 8px; border: 1px solid #bbb; box-sizing: border-box; }
+    button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; }
+    .top-right { position: absolute; right: 20px; top: 16px; }
+    .small { font-size: 0.9rem; }
+    /* responsive */
+    @media (max-width: 600px) {
+      .stats { flex-direction: column; }
+      header h1 { font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Login Page -->
+  <div id="loginPage" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#e8eef5;">
+    <div style="background:white;padding:30px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.2);width:320px;text-align:center;">
+      <h2>Login</h2>
+      <input id="username" type="text" placeholder="Enter username" />
+      <input id="password" type="password" placeholder="Enter password" />
+      <button id="loginBtn" style="background:#1a73e8;color:white;width:100%;margin-top:10px;">Login</button>
+      <p class="small">(This demo stores users locally in your browser. No server required.)</p>
+    </div>
+  </div>
+
+  <!-- Profile Page (modal-like) -->
+  <div id="profilePage" style="display:none;padding:20px;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);">
+    <div style="background:white;padding:20px;border-radius:12px;max-width:420px;width:90%;margin:auto;box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+      <h2>Profile Settings</h2>
+
+      <label>Name:</label>
+      <input id="profileName" type="text" placeholder="Enter your name" />
+
+      <label>Age:</label>
+      <input id="profileAge" type="number" placeholder="Enter your age" />
+
+      <label>Date of Birth:</label>
+      <input id="profileDOB" type="date" />
+
+      <label>Email:</label>
+      <input id="profileEmail" type="email" placeholder="Enter your email" />
+
+      <label>Fitness Goal:</label>
+      <input id="profileGoal" type="text" placeholder="Your fitness goal" />
+
+      <div style="display:flex;gap:10px;margin-top:12px;">
+        <button id="saveProfileBtn" style="background:#1a73e8;color:white;flex:1;">Save Profile</button>
+        <button id="closeProfileBtn" style="background:#444;color:white;flex:1;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="mainApp" style="display:none;min-height:100vh;">
+    <header>
+      <div class="top-right">
+        <button id="profileOpenBtn" style="background:white;color:#1a73e8;font-weight:bold;margin-right:8px;">Profile</button>
+        <button id="logoutBtn" style="background:#e74c3c;color:white;border-radius:8px;padding:8px 12px;">Logout</button>
+      </div>
+      <h1>Fitness Tracker Dashboard</h1>
+      <p>Track your workouts and daily progress!</p>
+    </header>
+
+    <div class="container">
+      <div class="card">
+        <h2>Today's Activities</h2>
+        <div class="stats">
+          <div class="stat-box"><h3>Sit-Ups</h3><p>Track Reps</p></div>
+          <div class="stat-box"><h3>Running</h3><p>Track Kilometers</p></div>
+          <div class="stat-box"><h3>Push-Ups</h3><p>Track Reps</p></div>
+        </div>
+      </div>
+
+      <div class="card progress-section">
+        <h2>Enter Today's Progress</h2>
+
+        <label>Sit-Ups:</label>
+        <input type="number" id="situpsInput" placeholder="Enter sit-ups" />
+
+        <label>Running (km):</label>
+        <input type="number" id="runningInput" step="0.1" placeholder="Enter km" />
+
+        <label>Push-Ups:</label>
+        <input type="number" id="pushupsInput" placeholder="Enter push-ups" />
+
+        <label>Plank (minutes):</label>
+        <input type="number" id="plankInput" step="0.1" placeholder="Minutes" />
+
+        <label>Squats:</label>
+        <input type="number" id="squatsInput" placeholder="Enter squats" />
+
+        <label>Crunches:</label>
+        <input type="number" id="crunchesInput" placeholder="Enter crunches" />
+
+        <button id="saveProgressBtn" style="background:#1a73e8;color:white;margin-top:10px;">Save Progress</button>
+      </div>
+
+      <div class="card">
+        <h2>Saved Progress (Daily Log)</h2>
+        <div id="progressList">No entries yet.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // -- Utility helpers --------------------------------------------------
+    function $(id) { return document.getElementById(id); }
+
+    // -- Authentication & Navigation -------------------------------------
+    function performLogin() {
+      const user = $('username').value.trim();
+      const pass = $('password').value.trim();
+      if (!user || !pass) { alert('Please enter username and password'); return; }
+
+      // NOTE: This demo stores only username locally for demo purposes.
+      localStorage.setItem('fitnessUser', user);
+      showMainApp();
+    }
+
+    function logout() {
+      localStorage.removeItem('fitnessUser');
+      // keep profile and logs, but you can change behavior if desired
+      showLogin();
+    }
+
+    function showLogin() {
+      $('loginPage').style.display = 'flex';
+      $('mainApp').style.display = 'none';
+      $('profilePage').style.display = 'none';
+    }
+
+    function showMainApp() {
+      $('loginPage').style.display = 'none';
+      $('mainApp').style.display = 'block';
+      $('profilePage').style.display = 'none';
+      loadProfileIntoUI();
+      loadProgress();
+    }
+
+    // -- Profile functions -----------------------------------------------
+    function openProfile() { $('profilePage').style.display = 'flex'; }
+    function closeProfile() { $('profilePage').style.display = 'none'; }
+
+    function saveProfile() {
+      const profile = {
+        name: $('profileName').value.trim(),
+        age: $('profileAge').value,
+        dob: $('profileDOB').value,
+        email: $('profileEmail').value.trim(),
+        goal: $('profileGoal').value.trim()
+      };
+      localStorage.setItem('fitnessProfile', JSON.stringify(profile));
+      alert('Profile Saved!');
+      closeProfile();
+      loadProfileIntoUI();
+    }
+
+    function loadProfileIntoUI() {
+      const p = JSON.parse(localStorage.getItem('fitnessProfile') || '{}');
+      if (p.name) { $('profileName').value = p.name; }
+      if (p.age) { $('profileAge').value = p.age; }
+      if (p.dob) { $('profileDOB').value = p.dob; }
+      if (p.email) { $('profileEmail').value = p.email; }
+      if (p.goal) { $('profileGoal').value = p.goal; }
+
+      // Optionally update header or greeting
+      const user = localStorage.getItem('fitnessUser');
+      if (user) {
+        const title = document.querySelector('header h1');
+        if (title) title.innerText = `Welcome, ${p.name || user}`;
+      }
+    }
+
+    // -- Progress (daily log) -------------------------------------------
+    function saveProgressEntry() {
+      const entry = {
+        date: new Date().toLocaleDateString(),
+        situps: $('situpsInput').value || '0',
+        running: $('runningInput').value || '0',
+        pushups: $('pushupsInput').value || '0',
+        plank: $('plankInput').value || '0',
+        squats: $('squatsInput').value || '0',
+        crunches: $('crunchesInput').value || '0'
+      };
+
+      const log = JSON.parse(localStorage.getItem('dailyLog') || '[]');
+      log.push(entry);
+      localStorage.setItem('dailyLog', JSON.stringify(log));
+      alert('Daily Progress Saved!');
+      clearInputs();
+      loadProgress();
+    }
+
+    function loadProgress() {
+      const log = JSON.parse(localStorage.getItem('dailyLog') || '[]');
+      const list = $('progressList');
+      if (!list) return;
+
+      if (log.length === 0) { list.innerHTML = 'No entries yet.'; return; }
+
+      // show most recent first
+      list.innerHTML = log.slice().reverse().map(e => `
+        <div class='progress-step'>
+          <strong>${e.date}</strong><br>
+          Sit-Ups: ${e.situps}<br>
+          Running: ${e.running} km<br>
+          Push-Ups: ${e.pushups}<br>
+          Plank: ${e.plank} min<br>
+          Squats: ${e.squats}<br>
+          Crunches: ${e.crunches}
+        </div>
+      `).join('');
+    }
+
+    function clearInputs() {
+      ['situpsInput','runningInput','pushupsInput','plankInput','squatsInput','crunchesInput'].forEach(id => { if ($(id)) $(id).value = ''; });
+    }
+
+    // -- Attach event listeners safely after DOM exists ------------------
+    document.addEventListener('DOMContentLoaded', () => {
+      // Bind UI buttons
+      const loginBtn = $('loginBtn');
+      if (loginBtn) loginBtn.addEventListener('click', performLogin);
+
+      const logoutBtn = $('logoutBtn');
+      if (logoutBtn) logoutBtn.addEventListener('click', logout);
+
+      const profileOpenBtn = $('profileOpenBtn');
+      if (profileOpenBtn) profileOpenBtn.addEventListener('click', openProfile);
+
+      const closeProfileBtn = $('closeProfileBtn');
+      if (closeProfileBtn) closeProfileBtn.addEventListener('click', closeProfile);
+
+      const saveProfileBtn = $('saveProfileBtn');
+      if (saveProfileBtn) saveProfileBtn.addEventListener('click', saveProfile);
+
+      const saveProgressBtn = $('saveProgressBtn');
+      if (saveProgressBtn) saveProgressBtn.addEventListener('click', saveProgressEntry);
+
+      // If user already logged in, show main app
+      if (localStorage.getItem('fitnessUser')) {
+        showMainApp();
+      } else {
+        showLogin();
+      }
+    });
+
+  </script>
+</body>
+</html>
